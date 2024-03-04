@@ -52,6 +52,7 @@ def main() -> None:
 
     transformed_spark_df = transformed_spark_df.drop('num_of_records')
     LOGGER.debug('Dropped column num_of_records')
+    transformed_spark_df = transformed_spark_df.limit(100)
 
     # Add score column
     transformed_spark_df = add_score(df=transformed_spark_df)
