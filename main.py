@@ -13,7 +13,7 @@ PHONE_NUMBER_REGEX_PATTERN = r'^\+?\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\
 LOGGER = setup_logger(__name__)
 
 
-def main():
+def main() -> None:
     spark_session: SparkSession = (SparkSession.builder
                                    .appName('TrueCaller')
                                    .config("spark.executor.memory", "8g")
