@@ -4,7 +4,7 @@ from typing import List
 import spacy
 
 from logger import setup_logger
-
+LOGGER = setup_logger(__name__)
 WORDS_TO_EXCLUDE = \
     [
         "Miss", "Ms", "Mrs", "Mr", "Dr", "Prof", "Eng",

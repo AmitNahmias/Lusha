@@ -4,7 +4,6 @@ from typing import Dict
 import asyncpg
 from asyncpg import Pool
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
 from conf import DB_CONF, DB_NAME
@@ -33,7 +32,7 @@ async def _fetch_caller_id(phone_number: str) -> str | None:
 
     pool = await _get_pool()
     LOGGER.debug('Created pool')
-    parsed_phone_number: str = parse_phone_number(phone_number)
+    parsed_phone_number: str = parse_phone_number(phone_number, None)
     if not parsed_phone_number:
         return None
 
