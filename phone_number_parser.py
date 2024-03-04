@@ -26,17 +26,16 @@ def parse_phone_number(phone_number: str, region: str) -> str | None:
 
 
 @lru_cache
-def _get_country_code(country_name: str) -> str:
+def _get_country_code(country_name: str) -> str | None:
     """
     Gets country name or code and returns matched country code.
 
     :param country_name: The country to search for.
     :return: The matched country code.
     """
-    try:
-        country = pycountry.countries.lookup(country_name)
-        return country.alpha_2
-    except LookupError as lookup_error:
-        # LOGGER.exception(lookup_error)
-        # LOGGER.error(f"Country '{country_name}' not found.")
-        return None
+    if country_name:
+        try:
+            country = pycountry.countries.lookup(country_name.strip())
+            return country.alpha_2
+        except LookupError:
+            LOGGER.warning(f"There is no country code for '{country_name}'.")
