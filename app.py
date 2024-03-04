@@ -51,7 +51,7 @@ async def _fetch_caller_id(phone_number: str) -> str | None:
 @app.get("/caller_id")
 async def get_caller_id(phone_number: str = Query(..., alias="phone")) -> Dict:
     LOGGER.info(f'Got {phone_number =}')
-    caller_info: str = await _fetch_caller_id(phone_number)
+    caller_info: str = await _fetch_caller_id(phone_number.strip())
     if caller_info:
         LOGGER.info(f'Found {caller_info =}')
         return \
