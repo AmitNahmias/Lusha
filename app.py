@@ -8,7 +8,6 @@ from starlette.responses import JSONResponse
 
 from conf import DB_CONF, DB_NAME
 from logger import setup_logger
-from phone_number_utils import parse_phone_number
 
 app = FastAPI()
 LOGGER = setup_logger(__name__)
@@ -18,6 +17,10 @@ LOGGER = setup_logger(__name__)
 async def _get_pool() -> Pool:
     return await asyncpg.create_pool(user=DB_CONF["user"], password=DB_CONF["password"],
                                      database=DB_NAME, host='localhost')
+
+
+def _clean_phone_number(phone_number: str) -> str:
+    return ''.join([char for char in phone_number if char.isdigit()])
 
 
 # Function to execute the query
@@ -32,8 +35,10 @@ async def _fetch_caller_id(phone_number: str) -> str | None:
 
     pool = await _get_pool()
     LOGGER.debug('Created pool')
-    parsed_phone_number: str = parse_phone_number(phone_number, region=None, api_mode=True)
-    if not parsed_phone_number:
+    clean_phone_number: str = _clean_phone_number(phone_number)
+
+    # validate that the number is in appropriate length and not None
+    if not clean_phone_number or len(clean_phone_number) > 15 or len(clean_phone_number) < 7:
         return None
 
     async with pool.acquire() as connection:
@@ -45,13 +50,13 @@ async def _fetch_caller_id(phone_number: str) -> str | None:
             ORDER BY COUNT(*) DESC, MIN(score)
             LIMIT 1;
         """
-        return await connection.fetchval(query, parsed_phone_number)
+        return await connection.fetchval(query, clean_phone_number)
 
 
 @app.get("/caller_id")
 async def get_caller_id(phone_number: str = Query(..., alias="phone")) -> Dict:
     LOGGER.info(f'Got {phone_number =}')
-    caller_info: str = await _fetch_caller_id(phone_number.strip())
+    caller_info: str = await _fetch_caller_id(phone_number)
     if caller_info:
         LOGGER.info(f'Found {caller_info =}')
         return \
