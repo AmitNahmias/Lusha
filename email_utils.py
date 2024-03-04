@@ -18,6 +18,3 @@ def extract_name_from_email(email):
         return ' '.join(name_tokens)
     else:
         return None
-
-
-extract_name_from_email('christopherrose@example.org')

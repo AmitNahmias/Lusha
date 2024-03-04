@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse
 
 from conf import DB_CONF, DB_NAME
 from logger import setup_logger
-from phone_number_parser import parse_phone_number
+from phone_number_utils import parse_phone_number
 
 app = FastAPI()
 LOGGER = setup_logger(__name__)
@@ -32,7 +32,7 @@ async def _fetch_caller_id(phone_number: str) -> str | None:
 
     pool = await _get_pool()
     LOGGER.debug('Created pool')
-    parsed_phone_number: str = parse_phone_number(phone_number, None)
+    parsed_phone_number: str = parse_phone_number(phone_number, region=None, api_mode=True)
     if not parsed_phone_number:
         return None
 
@@ -42,7 +42,7 @@ async def _fetch_caller_id(phone_number: str) -> str | None:
             FROM {DB_CONF['schema']}.{DB_CONF['table']}
             WHERE parsed_phone_number = $1
             GROUP BY parsed_name
-            ORDER BY COUNT(*) DESC
+            ORDER BY COUNT(*) DESC, MIN(score)
             LIMIT 1;
         """
         return await connection.fetchval(query, parsed_phone_number)
@@ -60,7 +60,7 @@ async def get_caller_id(phone_number: str = Query(..., alias="phone")) -> Dict:
             }
     else:
         LOGGER.warning(f'There is no match for {phone_number =} in our data :(')
-        raise HTTPException(status_code=404, detail="Caller ID not found")
+        raise HTTPException(status_code=404, detail=f"Caller ID {phone_number =} not found")
 
 
 @app.get("/")

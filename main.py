@@ -3,10 +3,11 @@ from pyspark.sql.functions import udf, col
 from pyspark.sql.types import StringType
 
 from conf import CSV_DB_PATH, DRIVER_PATH, DB_CONF
-from country_code_parser import parse_country_code
+from country_code_utils import parse_country_code
 from logger import setup_logger
-from name_parser import extract_name
-from phone_number_parser import parse_phone_number
+from name_utils import extract_name
+from phone_number_utils import parse_phone_number
+from score_calculator import add_score
 
 PHONE_NUMBER_REGEX_PATTERN = r'^\+?\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}$'
 LOGGER = setup_logger(__name__)
@@ -52,11 +53,14 @@ def main():
     transformed_spark_df = transformed_spark_df.drop('num_of_records')
     LOGGER.debug('Dropped column num_of_records')
 
+    # Add score column
+    transformed_spark_df = add_score(df=transformed_spark_df)
+
     LOGGER.info('Starting to write into the DB')
     LOGGER.debug(f'Inserting to schema: {DB_CONF["schema"]} on table {DB_CONF["table"]}')
 
     (transformed_spark_df.select("name", "phone_number", "source", "location", "work_email", "parsed_phone_number",
-                                 "country_code", "parsed_name")
+                                 "country_code", "parsed_name", "score")
      .write.format("jdbc")
      .option("url", DB_CONF['url'])
      .option("driver", DB_CONF['driver'])
