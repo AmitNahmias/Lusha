@@ -1,0 +1,8 @@
+pyspark
+phonenumbers
+pycountry
+spacy
+colorlog
+fastapi
+asyncpg
+uvicorn
