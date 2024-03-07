@@ -21,12 +21,14 @@ def main() -> None:
                                    .config("spark.master", "local[*]")
                                    .config("spark.jars", DRIVER_PATH)
                                    .getOrCreate())
+    LOGGER.debug('Created spark session')
 
     extract_name_udf = udf(extract_name, StringType())
     parse_phone_number_udf = udf(parse_phone_number, StringType())
     parse_country_code_udf = udf(parse_country_code, StringType())
 
     spark_df = spark_session.read.csv(CSV_DB_PATH, header=True, inferSchema=True)
+    LOGGER.debug(f'Got {spark_df.count()} records')
 
     # excluding all the rows that not match to number pattern
     spark_df = spark_df.filter(spark_df['phone_number'].rlike(PHONE_NUMBER_REGEX_PATTERN))
@@ -52,7 +54,6 @@ def main() -> None:
 
     transformed_spark_df = transformed_spark_df.drop('num_of_records')
     LOGGER.debug('Dropped column num_of_records')
-    transformed_spark_df = transformed_spark_df.limit(100)
 
     # Add score column
     transformed_spark_df = add_score(df=transformed_spark_df)
@@ -71,6 +72,9 @@ def main() -> None:
 
     LOGGER.info('Finished inserting to DB')
     LOGGER.debug(f'Inserted to schema: {DB_CONF["schema"]} on table {DB_CONF["table"]}')
+
+    spark_session.stop()
+    LOGGER.debug('Stopped spark session')
 
 
 if __name__ == '__main__':
